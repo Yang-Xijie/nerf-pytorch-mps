@@ -18,6 +18,25 @@ from load_deepvoxels import load_dv_data
 from load_blender import load_blender_data
 from load_LINEMOD import load_LINEMOD_data
 
+# [DEBUG]
+import inspect
+import pathlib
+
+
+class PythonLogger:
+    def _GetFileInfo(self) -> str:
+        callerframerecord = inspect.stack()[2]  # 1 represents line at caller
+        frame = callerframerecord[0]
+        info = inspect.getframeinfo(frame)
+        return (
+            f"{pathlib.PurePath(info.filename).name}({info.lineno}).{info.function}()"
+        )
+
+    def __init__(self, title: str = "log", label: str = ""):
+        print(f"[{title}]\t{self._GetFileInfo()}\n\t{label}")
+        pass
+
+
 # [origin] device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # [mps]
 if torch.backends.mps.is_available():
@@ -953,8 +972,7 @@ def train():
             # Random from one image
             img_i = np.random.choice(i_train)
             target = images[img_i]
-            print(f"[DEBUG] {target.dtype}")
-            target = torch.tensor(target).to(device)
+            target = torch.tensor(target, dtype=torch.float32)
             pose = poses[img_i, :3, :4]
 
             if N_rand is not None:
