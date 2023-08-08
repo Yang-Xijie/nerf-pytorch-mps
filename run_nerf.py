@@ -30,6 +30,16 @@ else:
     device = "cpu"
     print(f"[DEBUG] 使用 cpu")
 
+# [origin] torch.set_default_tensor_type('torch.cuda.FloatTensor')
+# UserWarning: torch.set_default_tensor_type() is deprecated as of PyTorch 2.1,
+# please use torch.set_default_dtype() and torch.set_default_device() as alternatives.
+# [mps] https://github.com/pytorch/pytorch/issues/82296
+# https://github.com/pytorch/pytorch/issues/82296#issuecomment-1377013203
+# https://stackoverflow.com/a/76857876/14298786
+torch.set_default_dtype(torch.float32)
+torch.set_default_device(device)
+# Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+
 np.random.seed(0)
 DEBUG = False
 
@@ -329,7 +339,7 @@ def raw2outputs(raw, z_vals, rays_d, raw_noise_std=0, white_bkgd=False, pytest=F
 
     dists = z_vals[..., 1:] - z_vals[..., :-1]
     dists = torch.cat(
-        [dists, torch.Tensor([1e10]).expand(dists[..., :1].shape)], -1
+        [dists, torch.tensor([1e10]).expand(dists[..., :1].shape)], -1
     )  # [N_rays, N_samples]
 
     dists = dists * torch.norm(rays_d[..., None, :], dim=-1)
@@ -343,7 +353,7 @@ def raw2outputs(raw, z_vals, rays_d, raw_noise_std=0, white_bkgd=False, pytest=F
         if pytest:
             np.random.seed(0)
             noise = np.random.rand(*list(raw[..., 3].shape)) * raw_noise_std
-            noise = torch.Tensor(noise)
+            noise = torch.tensor(noise)
 
     alpha = raw2alpha(raw[..., 3] + noise, dists)  # [N_rays, N_samples]
     # weights = alpha * tf.math.cumprod(1.-alpha + 1e-10, -1, exclusive=True)
@@ -438,7 +448,7 @@ def render_rays(
         if pytest:
             np.random.seed(0)
             t_rand = np.random.rand(*list(z_vals.shape))
-            t_rand = torch.Tensor(t_rand)
+            t_rand = torch.tensor(t_rand)
 
         z_vals = lower + (upper - lower) * t_rand
 
@@ -844,7 +854,7 @@ def train():
     render_kwargs_test.update(bds_dict)
 
     # Move testing data to GPU
-    render_poses = torch.Tensor(render_poses).to(device)
+    render_poses = torch.tensor(render_poses).to(device)
 
     # Short circuit if only rendering out from trained model
     if args.render_only:
@@ -907,10 +917,10 @@ def train():
 
     # Move training data to GPU
     if use_batching:
-        images = torch.Tensor(images).to(device)
-    poses = torch.Tensor(poses).to(device)
+        images = torch.tensor(images).to(device)
+    poses = torch.tensor(poses).to(device)
     if use_batching:
-        rays_rgb = torch.Tensor(rays_rgb).to(device)
+        rays_rgb = torch.tensor(rays_rgb).to(device)
 
     N_iters = 200000 + 1
     print("Begin")
@@ -943,12 +953,13 @@ def train():
             # Random from one image
             img_i = np.random.choice(i_train)
             target = images[img_i]
-            target = torch.Tensor(target).to(device)
+            print(f"[DEBUG] {target.dtype}")
+            target = torch.tensor(target).to(device)
             pose = poses[img_i, :3, :4]
 
             if N_rand is not None:
                 rays_o, rays_d = get_rays(
-                    H, W, K, torch.Tensor(pose)
+                    H, W, K, torch.tensor(pose)
                 )  # (H, W, 3), (H, W, 3)
 
                 if i < args.precrop_iters:
@@ -1070,7 +1081,7 @@ def train():
             print("test poses shape", poses[i_test].shape)
             with torch.no_grad():
                 render_path(
-                    torch.Tensor(poses[i_test]).to(device),
+                    torch.tensor(poses[i_test]).to(device),
                     hwf,
                     K,
                     args.chunk,
@@ -1128,7 +1139,4 @@ def train():
 
 
 if __name__ == "__main__":
-    # [origin] torch.set_default_tensor_type('torch.cuda.FloatTensor')
-    # [mps] related issue: https://github.com/pytorch/pytorch/issues/82296 and https://github.com/pytorch/pytorch/issues/82296#issuecomment-1377013203
-    torch.set_default_device(device)
     train()

@@ -9,5 +9,5 @@ pip install -r requirements-mps.txt
 
 ```
 conda activate nerf-mps
-python run_nerf.py --config configs/lego.txt
+PYTORCH_ENABLE_MPS_FALLBACK=1 python run_nerf.py --config configs/lego.txt
 ```
