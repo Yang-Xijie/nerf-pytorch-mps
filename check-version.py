@@ -5,5 +5,5 @@
 import torch
 import torchvision
 
-print(torch.__version__) # 2.1.0.dev20230807
-print(torchvision.__version__) # 0.15.2a0
+print(torch.__version__)  # 2.1.0.dev20230807
+print(torchvision.__version__)  # 0.15.2a0
