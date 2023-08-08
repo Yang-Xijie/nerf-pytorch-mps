@@ -1,0 +1,13 @@
+# mps
+
+```
+conda create --name nerf-mps
+conda activate nerf-mps
+conda install pytorch torchvision -c pytorch-nightly
+pip install -r requirements-mps.txt
+```
+
+```
+conda activate nerf-mps
+python run_nerf.py --config configs/lego.txt
+```

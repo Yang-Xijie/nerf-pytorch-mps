@@ -18,8 +18,18 @@ from load_deepvoxels import load_dv_data
 from load_blender import load_blender_data
 from load_LINEMOD import load_LINEMOD_data
 
+# [origin] device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# [mps]
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
+    print(f"[DEBUG] 使用 mps")
+elif torch.cuda.is_available():
+    device = torch.device("cuda")
+    print(f"[DEBUG] 使用 cuda")
+else:
+    device = "cpu"
+    print(f"[DEBUG] 使用 cpu")
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 np.random.seed(0)
 DEBUG = False
 
@@ -873,6 +883,7 @@ def train():
 
 
 if __name__=='__main__':
-    torch.set_default_tensor_type('torch.cuda.FloatTensor')
-
+    # [origin] torch.set_default_tensor_type('torch.cuda.FloatTensor')
+    # [mps] related issue: https://github.com/pytorch/pytorch/issues/82296 and https://github.com/pytorch/pytorch/issues/82296#issuecomment-1377013203
+    torch.set_default_device(device)
     train()
